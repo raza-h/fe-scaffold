@@ -20,29 +20,27 @@ export function useAuth() {
 
   const login = useCallback(
     async (credentials: LoginCredentials) => {
-      try {
-        const { user } = await loginUser(credentials);
-        queryClient.setQueryData(["auth", "user"], user);
+      const result = await loginUser(credentials);
+      if (result) {
+        queryClient.setQueryData(["auth", "user"], result.user);
         toast.success("Successfully logged in");
-        return user;
-      } catch (error) {
-        toast.error("Failed to login");
-        throw error;
+        return result.user;
       }
+      toast.error("Failed to login");
+      return null;
     },
     [queryClient]
   );
 
   const logout = useCallback(async () => {
-    try {
-      await logoutUser();
-      queryClient.setQueryData(["auth", "user"], null);
+    const success = await logoutUser();
+    queryClient.setQueryData(["auth", "user"], null);
+    if (success) {
       toast.success("Successfully logged out");
-      router.push("/login");
-    } catch (error) {
+    } else {
       toast.error("Failed to logout");
-      throw error;
     }
+    router.push("/login");
   }, [queryClient, router]);
 
   return {

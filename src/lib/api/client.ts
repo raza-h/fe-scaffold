@@ -1,4 +1,8 @@
+import { protectedRoutes } from "@/config/routes";
+import * as Sentry from "@sentry/nextjs";
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
+import { toast } from "sonner";
+import { sanitizePath } from "../utils";
 
 export interface ApiError {
   message: string;
@@ -34,7 +38,7 @@ const createApiClient = (): AxiosInstance => {
   client.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
-      const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+      const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean; _silent?: boolean };
 
       if (error.response?.status === 401 && !originalRequest._retry) {
         originalRequest._retry = true;
@@ -47,9 +51,10 @@ const createApiClient = (): AxiosInstance => {
           );
           return client(originalRequest);
         } catch {
-          if (typeof window !== "undefined") {
+          if (typeof window !== "undefined" && protectedRoutes.includes(sanitizePath(window.location.pathname))) {
             window.location.href = "/login";
           }
+          return new Promise(() => {});
         }
       }
 
@@ -59,6 +64,22 @@ const createApiClient = (): AxiosInstance => {
         code: (error.response?.data as { code?: string })?.code,
         details: (error.response?.data as { details?: Record<string, unknown> })?.details,
       };
+
+      if (apiError.status !== 401 && apiError.status !== 403) {
+        Sentry.captureException(error, {
+          extra: {
+            url: originalRequest.url,
+            method: originalRequest.method,
+            status: apiError.status,
+            code: apiError.code,
+            details: apiError.details,
+          },
+        });
+      }
+
+      if (!originalRequest._silent) {
+        toast.error(apiError.message);
+      }
 
       throw new NetworkError(apiError);
     }

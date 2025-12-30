@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { redirect, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -21,14 +21,13 @@ export default function LoginPage() {
 
   const returnUrl = searchParams.get('from') ?? '/dashboard';
 
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    try {
-      await login(formData);
+    const user = await login(formData);
+    if (user) {
       router.push(returnUrl);
-    } catch {
+    } else {
       setIsLoading(false);
     }
   };

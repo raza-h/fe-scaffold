@@ -12,22 +12,13 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   const { isAuthenticated } = useAuth();
 
-  if (isAuthenticated) {
-    return (
-      <div className="relative min-h-screen flex">
-        <Sidebar />
-        <div className="flex-1 flex flex-col">
-          <Header showSidebar />
-          <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="relative min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+    <div className="relative min-h-screen flex">
+      <Sidebar visible={isAuthenticated} />
+      <div className="flex-1 flex flex-col">
+        <Header showSidebar={isAuthenticated} />
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+      </div>
     </div>
   );
 }

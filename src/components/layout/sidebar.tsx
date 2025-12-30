@@ -11,8 +11,16 @@ const navItems = [
   { href: "/settings", label: "Settings", icon: GearIcon },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  visible?: boolean;
+}
+
+export function Sidebar({ visible = true }: SidebarProps) {
   const pathname = usePathname();
+
+  if (!visible) {
+    return null;
+  }
 
   return (
     <aside className="hidden lg:flex w-64 flex-col border-r border-border bg-card">

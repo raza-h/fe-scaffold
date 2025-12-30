@@ -1,38 +1,31 @@
 "use client";
 
-import { api } from "@/lib/api/client";
+import { apiClient } from "@/lib/api/client";
 import { User, LoginCredentials } from "./types";
 
-export async function loginUser(credentials: LoginCredentials): Promise<{ user: User }> {
-  const data = await api.post<{ user: User }>("/auth/login", credentials);
-  return data;
+export async function loginUser(credentials: LoginCredentials): Promise<{ user: User } | null> {
+  try {
+    const response = await apiClient.post<{ user: User }>("/auth/login", credentials, { _silent: true } as never);
+    return response.data;
+  } catch {
+    return null;
+  }
 }
 
 export async function fetchCurrentUser(): Promise<User | null> {
-  let response = await fetch("/api/auth/current", {
-    credentials: "include",
-  });
-
-  if (response.status === 401) {
-    const refreshResponse = await fetch("/api/auth/refresh", {
-      method: "POST",
-      credentials: "include",
-    });
-
-    if (refreshResponse.ok) {
-      response = await fetch("/api/auth/current", {
-        credentials: "include",
-      });
-    }
-  }
-
-  if (!response.ok) {
+  try {
+    const response = await apiClient.get<User>("/auth/current", { _silent: true } as never);
+    return response.data;
+  } catch {
     return null;
   }
-
-  return response.json();
 }
 
-export async function logoutUser(): Promise<void> {
-  await api.post("/auth/logout");
+export async function logoutUser(): Promise<boolean> {
+  try {
+    await apiClient.post("/auth/logout", {}, { _silent: true } as never);
+    return true;
+  } catch {
+    return false;
+  }
 }
